@@ -586,5 +586,56 @@
             observer.observe(el);
         });
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Obtener parámetros de la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const spotCode = urlParams.get('code');
+
+            // 2. Si existe un código, modificamos la UI
+            if (spotCode) {
+                console.log("Spot encontrado:", spotCode);
+
+                // A. Modificar el Título Principal (Hero)
+                const heroTitle = document.querySelector('h1');
+                if (heroTitle) {
+                    heroTitle.innerHTML = `
+                        ¡Spot Encontrado!<br>
+                        <span class="text-gradient">${spotCode}</span>
+                    `;
+                }
+
+                // B. Modificar el Párrafo del Hero
+                const heroDesc = document.querySelector('p.text-xl');
+                if (heroDesc) {
+                    heroDesc.innerHTML = `Has descubierto un lugar secreto. <span class="text-white font-bold">Abre la App</span> para registrar tu visita, ganar XP y subir en el ranking.`;
+                }
+
+                // C. Crear Botón de "ABRIR APP" (Deep Link)
+                // Esto intenta abrir la app directamente si está instalada
+                const ctaContainer = document.querySelector('.flex.flex-col.sm\\:flex-row.gap-4');
+                if (ctaContainer) {
+                    // Limpiamos los botones actuales del hero para dar prioridad a la acción
+                    ctaContainer.innerHTML = `
+                        <a href="spothuntapp://qr/${spotCode}" 
+                           class="flex items-center justify-center gap-3 bg-brand-purple hover:bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg shadow-brand-purple/25 text-lg w-full sm:w-auto animate-bounce">
+                            <i data-lucide="zap" class="w-5 h-5"></i>
+                            Reclamar Spot en la App
+                        </a>
+                        <a href="#download" class="flex items-center justify-center gap-3 bg-brand-dark border border-gray-700 text-white px-8 py-4 rounded-xl font-bold transition-all text-lg w-full sm:w-auto">
+                            No tengo la App
+                        </a>
+                    `;
+                    // Reinicializar iconos para los nuevos elementos
+                    lucide.createIcons();
+                }
+
+                // D. (Opcional) Guardar el código en el portapapeles por si acaso
+                navigator.clipboard.writeText(spotCode).catch(err => console.log('Error clipboard', err));
+            }
+        });
+    </script>
+</body>
+</html>
 </body>
 </html>
