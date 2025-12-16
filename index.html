@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SpotHunt: Gamifica tu mundo. Crea squads, encuentra spots secretos y domina tu ciudad.">
+    <title>SpotHunt - El Mundo es tu Tablero</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Tipografía Base */
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Space Grotesk', sans-serif; }
+        
+        /* Animaciones Personalizadas */
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+            animation-delay: 4s;
+        }
+
+        /* Efecto Radar */
+        @keyframes radar-ping {
+            0% { transform: scale(0.1); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        .radar-effect::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(22, 163, 74, 0.4); /* Primary Green */
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: radar-ping 2s infinite cubic-bezier(0, 0, 0.2, 1);
+            z-index: -1;
+        }
+
+        /* Utilidades Glassmorphism / Surface */
+        .glass {
+            background: rgba(26, 26, 26, 0.8); /* Surface #1A1A1A with opacity */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-card {
+            background: #1A1A1A; /* Surface */
+            border: 1px solid #262626; /* Surface Secondary border */
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            border-color: #16a34a; /* Primary Border on hover */
+            transform: translateY(-2px);
+        }
+
+        /* Gradiente de Texto */
+        .text-gradient {
+            background: linear-gradient(135deg, #16a34a 0%, #4ade80 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Hide Scrollbar but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#000000',     // dark.background
+                            surface: '#1A1A1A',  // dark.surface
+                            surface2: '#262626', // dark.surfaceSecondary
+                            primary: '#16a34a',  // primary
+                            primaryHover: '#15803d', // primaryHover
+                            text: '#EEEEEE',     // dark.text
+                            muted: '#9ca3af',    // dark.textMuted
+                        }
+                    },
+                    perspective: {
+                        '1000': '1000px',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-dark text-brand-text overflow-x-hidden selection:bg-brand-primary selection:text-white">
+
+    <!-- Background Elements -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <!-- Subtle Green Glows -->
+        <div class="absolute top-0 -left-4 w-96 h-96 bg-brand-primary mix-blend-screen filter blur-[150px] opacity-10 animate-blob"></div>
+        <div class="absolute top-1/2 right-0 w-96 h-96 bg-brand-primary mix-blend-screen filter blur-[150px] opacity-5 animate-blob animation-delay-2000"></div>
+        <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 brightness-100 contrast-150"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 top-0 glass border-b-0 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <div class="flex items-center gap-3 cursor-pointer group">
+                    <div class="relative w-10 h-10 bg-brand-primary/10 border border-brand-primary/20 rounded-xl flex items-center justify-center group-hover:bg-brand-primary transition-colors duration-300">
+                        <i data-lucide="crosshair" class="text-brand-primary w-6 h-6 group-hover:text-white transition-colors"></i>
+                    </div>
+                    <span class="font-bold text-2xl tracking-tight text-white">Spot<span class="text-brand-primary">Hunt</span></span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-sm font-medium text-brand-muted hover:text-brand-primary transition-colors relative group">
+                        Características
+                    </a>
+                    <a href="#how-it-works" class="text-sm font-medium text-brand-muted hover:text-brand-primary transition-colors relative group">
+                        Cómo Jugar
+                    </a>
+                    <a href="#reviews" class="text-sm font-medium text-brand-muted hover:text-brand-primary transition-colors relative group">
+                        Comunidad
+                    </a>
+                    <button class="bg-brand-primary text-white px-6 py-2.5 rounded-full font-bold hover:bg-brand-primaryHover transition-all transform hover:scale-105 shadow-lg shadow-brand-primary/20 flex items-center gap-2">
+                        <span>Descargar App</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Mobile Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-white p-2 hover:bg-white/10 rounded-lg transition-colors">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Panel -->
+        <div id="mobile-menu" class="hidden md:hidden glass border-t border-brand-surface2 absolute w-full left-0 bg-brand-surface">
+            <div class="px-4 pt-2 pb-6 space-y-2">
+                <a href="#features" class="block px-3 py-3 rounded-md text-base font-medium text-brand-muted hover:text-brand-primary hover:bg-brand-surface2">Características</a>
+                <a href="#how-it-works" class="block px-3 py-3 rounded-md text-base font-medium text-brand-muted hover:text-brand-primary hover:bg-brand-surface2">Cómo Jugar</a>
+                <a href="#reviews" class="block px-3 py-3 rounded-md text-base font-medium text-brand-muted hover:text-brand-primary hover:bg-brand-surface2">Comunidad</a>
+                <div class="pt-4">
+                    <button class="w-full bg-brand-primary text-white px-5 py-3 rounded-lg font-bold shadow-lg shadow-brand-primary/25">
+                        Descargar Gratis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden min-h-screen flex items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-16">
+                
+                <!-- Text Content -->
+                <div class="lg:w-1/2 text-center lg:text-left z-20">
+                    <div class="inline-flex items-center px-4 py-2 rounded-full bg-brand-surface border border-brand-surface2 text-brand-primary text-sm font-bold mb-8 animate-fade-in-up">
+                        <span class="flex h-2 w-2 relative mr-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-primary"></span>
+                        </span>
+                        Beta v2.0 disponible en tu ciudad
+                    </div>
+                    
+                    <h1 class="text-5xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.1] text-brand-text">
+                        Explora lo <br> 
+                        <span class="text-gradient">Desconocido.</span>
+                    </h1>
+                    
+                    <p class="text-xl text-brand-muted mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                        Convierte tu ciudad en un RPG masivo. Crea <strong>Squads</strong>, esconde <strong>Spots</strong> secretos y compite por dominar el ranking local.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <button class="flex items-center justify-center gap-3 bg-brand-primary hover:bg-brand-primaryHover text-white px-8 py-4 rounded-xl font-bold transition-all transform hover:-translate-y-1 shadow-lg shadow-brand-primary/25 text-lg group">
+                            <i data-lucide="rocket" class="w-5 h-5 group-hover:animate-bounce"></i>
+                            Empezar Aventura
+                        </button>
+                        <button class="flex items-center justify-center gap-3 bg-brand-surface hover:bg-brand-surface2 text-white px-8 py-4 rounded-xl font-bold transition-all text-lg border border-brand-surface2 hover:border-brand-primary/50">
+                            <i data-lucide="play-circle" class="w-5 h-5 text-brand-primary"></i>
+                            Ver Demo
+                        </button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="mt-12 flex items-center justify-center lg:justify-start gap-8 border-t border-brand-surface2 pt-8">
+                        <div>
+                            <p class="text-3xl font-bold text-white font-mono">12k+</p>
+                            <p class="text-xs uppercase tracking-wider text-brand-muted font-semibold">Hunters</p>
+                        </div>
+                        <div class="w-px h-10 bg-brand-surface2"></div>
+                        <div>
+                            <p class="text-3xl font-bold text-white font-mono">850</p>
+                            <p class="text-xs uppercase tracking-wider text-brand-muted font-semibold">Spots Activos</p>
+                        </div>
+                        <div class="w-px h-10 bg-brand-surface2"></div>
+                        <div>
+                            <p class="text-3xl font-bold text-white font-mono">4.9</p>
+                            <div class="flex text-yellow-500 text-xs">
+                                <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                                <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                                <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                                <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                                <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Phone Visual -->
+                <div class="lg:w-1/2 relative flex justify-center perspective-[2000px] z-10 mt-10 lg:mt-0">
+                    <!-- Floating Notification Left -->
+                    <div class="absolute top-20 -left-4 md:-left-12 bg-brand-surface p-4 rounded-2xl border border-brand-surface2 shadow-2xl z-20 animate-[bounce_3s_infinite]">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary">
+                                <i data-lucide="map-pin" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-brand-muted">Nuevo Spot Detectado</p>
+                                <p class="font-bold text-sm text-white">Parque Secreto</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Notification Right -->
+                    <div class="absolute bottom-32 -right-4 md:-right-12 bg-brand-surface p-4 rounded-2xl border border-brand-surface2 shadow-2xl z-20 animate-[bounce_4s_infinite]">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400">
+                                <i data-lucide="trophy" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-brand-muted">Logro Desbloqueado</p>
+                                <p class="font-bold text-sm text-white">Explorador Urbano</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phone Frame -->
+                    <div class="relative w-[300px] h-[600px] bg-brand-dark rounded-[45px] border-[8px] border-[#262626] shadow-2xl overflow-hidden transform rotate-y-[-12deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out group">
+                        <!-- Dynamic Island -->
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-30"></div>
+                        
+                        <!-- Screen Content -->
+                        <div class="w-full h-full bg-brand-surface flex flex-col relative overflow-hidden">
+                            <!-- Map UI (Simulated - Dark Mode Grid) -->
+                            <div class="absolute inset-0 opacity-60">
+                                <div class="w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-brand-surface2 via-brand-surface to-black grid grid-cols-6 grid-rows-10 gap-1">
+                                    <!-- Map Grid Lines -->
+                                    <div class="border-r border-brand-surface2/30"></div><div class="border-r border-brand-surface2/30"></div><div class="border-r border-brand-surface2/30"></div>
+                                    <div class="border-r border-brand-surface2/30"></div><div class="border-r border-brand-surface2/30"></div><div class="border-r border-brand-surface2/30"></div>
+                                </div>
+                            </div>
+
+                            <!-- Radar Pulse Center -->
+                            <div class="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                <div class="relative w-24 h-24 flex justify-center items-center">
+                                    <div class="absolute inset-0 bg-brand-primary/20 rounded-full animate-ping"></div>
+                                    <div class="absolute inset-2 bg-brand-primary/30 rounded-full animate-ping animation-delay-200"></div>
+                                    <div class="w-6 h-6 bg-brand-primary rounded-full border-2 border-white z-10 shadow-[0_0_20px_rgba(22,163,74,0.8)]"></div>
+                                    
+                                    <!-- Tooltip -->
+                                    <div class="absolute -top-12 bg-white text-brand-dark text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                        ¡Spot de Alex cercano!
+                                        <div class="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-2 h-2 bg-white rotate-45"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Friend Avatar -->
+                            <div class="absolute bottom-1/3 right-1/4 animate-bounce duration-[3000ms]">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-10 h-10 rounded-full border-2 border-brand-primary shadow-lg bg-brand-surface">
+                            </div>
+
+                            <!-- Bottom Sheet UI -->
+                            <div class="absolute bottom-0 w-full bg-brand-surface2/95 backdrop-blur-xl p-5 rounded-t-3xl border-t border-white/5 z-20 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                                <div class="w-12 h-1 bg-brand-muted/30 rounded-full mx-auto mb-4"></div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold text-lg text-white">Misión Activa</h3>
+                                        <p class="text-xs text-brand-muted">Centro Histórico</p>
+                                    </div>
+                                    <span class="bg-brand-primary/20 text-brand-primary text-xs font-bold px-2 py-1 rounded">2/5 XP</span>
+                                </div>
+                                <div class="w-full bg-brand-dark h-2 rounded-full mb-4 overflow-hidden">
+                                    <div class="bg-brand-primary h-full w-2/5 rounded-full"></div>
+                                </div>
+                                <button class="w-full bg-white text-brand-dark py-3 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors">
+                                    Escanear Código QR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-24 relative bg-brand-dark border-t border-brand-surface2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4 text-white">Tu vida social, <span class="text-gradient">gamificada.</span></h2>
+                <p class="text-brand-muted max-w-2xl mx-auto text-lg">SpotHunt no es solo un mapa, es una capa de realidad aumentada sobre tus interacciones diarias.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Feature 1: Squads -->
+                <div class="md:col-span-2 glass-card rounded-3xl p-10 relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-brand-surface2 rounded-2xl flex items-center justify-center text-brand-primary mb-6 group-hover:scale-110 transition-transform border border-brand-surface2">
+                            <i data-lucide="users" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 text-white">Squads Privados</h3>
+                        <p class="text-brand-muted max-w-md text-lg leading-relaxed">
+                            Crea grupos exclusivos para tu círculo de amigos, compañeros o familia. Mantén tus spots privados y compite solo contra quien tú elijas.
+                        </p>
+                        <div class="mt-8 flex -space-x-3">
+                            <img class="w-10 h-10 rounded-full border-2 border-brand-surface" src="https://api.dicebear.com/7.x/avataaars/svg?seed=1" alt="">
+                            <img class="w-10 h-10 rounded-full border-2 border-brand-surface" src="https://api.dicebear.com/7.x/avataaars/svg?seed=2" alt="">
+                            <img class="w-10 h-10 rounded-full border-2 border-brand-surface" src="https://api.dicebear.com/7.x/avataaars/svg?seed=3" alt="">
+                            <div class="w-10 h-10 rounded-full border-2 border-brand-surface bg-brand-primary flex items-center justify-center text-xs font-bold text-white">+5</div>
+                        </div>
+                    </div>
+                    <!-- Background Icon Decoration -->
+                    <div class="absolute right-[-20px] bottom-[-20px] opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500">
+                        <i data-lucide="users" class="w-80 h-80 text-white"></i>
+                    </div>
+                </div>
+
+                <!-- Feature 2: Spots -->
+                <div class="glass-card rounded-3xl p-10 relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-brand-surface2 rounded-2xl flex items-center justify-center text-brand-primary mb-6 group-hover:scale-110 transition-transform border border-brand-surface2">
+                            <i data-lucide="map-pin" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 text-white">Drop Spots</h3>
+                        <p class="text-brand-muted text-lg">
+                            ¿Encontraste un mirador increíble? Márcalo en el mapa, ponle nombre, dificultad y deja una pista críptica.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 3: Validate -->
+                <div class="glass-card rounded-3xl p-10 relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-brand-surface2 rounded-2xl flex items-center justify-center text-brand-primary mb-6 group-hover:scale-110 transition-transform border border-brand-surface2">
+                            <i data-lucide="qr-code" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 text-white">Scan & Win</h3>
+                        <p class="text-brand-muted text-lg">
+                            Valida tu visita escaneando códigos QR físicos o mediante geolocalización precisa para ganar XP.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 4: Rankings -->
+                <div class="md:col-span-2 glass-card rounded-3xl p-10 relative overflow-hidden group">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
+                        <div>
+                            <div class="w-14 h-14 bg-brand-surface2 rounded-2xl flex items-center justify-center text-yellow-400 mb-6 group-hover:scale-110 transition-transform border border-brand-surface2">
+                                <i data-lucide="crown" class="w-7 h-7"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold mb-4 text-white">Ranking Semanal</h3>
+                            <p class="text-brand-muted max-w-sm text-lg">
+                                La gloria es efímera. Cada semana se reinicia el tablero. ¿Quién será el Rey de la Colina esta vez?
+                            </p>
+                        </div>
+                        
+                        <!-- Mini Leaderboard UI -->
+                        <div class="bg-brand-surface2/50 backdrop-blur p-6 rounded-2xl border border-white/5 w-full md:w-72 shadow-2xl transform rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                            <h4 class="text-xs uppercase tracking-widest text-brand-muted mb-4 font-bold">Top Explorers</h4>
+                            
+                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-white/5">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-yellow-400 font-bold text-lg">#1</span>
+                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-8 h-8 rounded-full bg-brand-surface">
+                                    <span class="text-sm font-bold text-white">Tú</span>
+                                </div>
+                                <span class="text-brand-primary text-xs font-bold bg-brand-primary/10 px-2 py-1 rounded">1250 XP</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between opacity-60">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-brand-muted font-bold text-lg">#2</span>
+                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" class="w-8 h-8 rounded-full bg-brand-surface">
+                                    <span class="text-sm font-bold text-white">Sarah</span>
+                                </div>
+                                <span class="text-brand-primary text-xs font-bold">980 XP</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Steps -->
+    <section id="how-it-works" class="py-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <h2 class="text-3xl md:text-5xl font-bold mb-20 text-center text-white">Tu aventura comienza así</h2>
+            
+            <div class="relative">
+                <!-- Connecting Line (Desktop) -->
+                <div class="hidden md:block absolute top-12 left-0 w-full h-px bg-brand-surface2 z-0"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <!-- Step 1 -->
+                    <div class="relative z-10 flex flex-col items-center text-center group">
+                        <div class="w-24 h-24 bg-brand-surface rounded-full border-4 border-brand-primary flex items-center justify-center text-3xl font-bold mb-6 shadow-[0_0_30px_rgba(22,163,74,0.2)] group-hover:scale-110 transition-transform duration-300 relative">
+                            <span class="text-white">1</span>
+                            <div class="absolute inset-0 rounded-full border border-brand-primary/20 animate-ping opacity-20"></div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3 text-white">Únete a un Squad</h3>
+                        <p class="text-brand-muted text-sm leading-relaxed px-4">
+                            Recibe un código de invitación o crea tu propio equipo de exploradores urbanos.
+                        </p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="relative z-10 flex flex-col items-center text-center group">
+                        <div class="w-24 h-24 bg-brand-surface rounded-full border-4 border-brand-surface2 group-hover:border-brand-primary flex items-center justify-center text-3xl font-bold mb-6 group-hover:scale-110 transition-all duration-300 delay-100">
+                            <span class="text-white">2</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3 text-white">Sigue el Radar</h3>
+                        <p class="text-brand-muted text-sm leading-relaxed px-4">
+                            Usa la brújula en tiempo real. La señal se vuelve más fuerte conforme te acercas.
+                        </p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="relative z-10 flex flex-col items-center text-center group">
+                        <div class="w-24 h-24 bg-brand-surface rounded-full border-4 border-brand-surface2 group-hover:border-brand-primary flex items-center justify-center text-3xl font-bold mb-6 group-hover:scale-110 transition-all duration-300 delay-200">
+                            <span class="text-white">3</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3 text-white">Captura y Sube</h3>
+                        <p class="text-brand-muted text-sm leading-relaxed px-4">
+                            Reclama el territorio, sube una foto de prueba y desbloquea el trofeo del lugar.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA / Download Section -->
+    <section class="py-20">
+        <div class="max-w-5xl mx-auto px-4">
+            <div class="bg-brand-surface rounded-[3rem] p-12 md:p-20 text-center border border-brand-surface2 relative overflow-hidden">
+                <!-- Abstract Pattern -->
+                <div class="absolute top-0 left-0 w-full h-full opacity-5" style="background-image: radial-gradient(#16a34a 1px, transparent 1px); background-size: 30px 30px;"></div>
+                
+                <div class="relative z-10">
+                    <h2 class="text-4xl md:text-6xl font-black mb-6 tracking-tight text-white">¿Listo para cazar?</h2>
+                    <p class="text-xl text-brand-muted mb-10 max-w-2xl mx-auto">
+                        Descarga <span class="text-brand-primary font-bold">SpotHunt</span> ahora y convierte tu aburrida caminata de domingo en una misión épica.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <button class="bg-white text-brand-dark px-8 py-4 rounded-xl font-bold hover:bg-gray-200 transition-all flex items-center justify-center gap-3 shadow-lg transform hover:-translate-y-1">
+                            <i data-lucide="apple" class="w-6 h-6 fill-current"></i>
+                            <div class="text-left">
+                                <div class="text-[10px] uppercase font-bold text-gray-500 leading-none">Descargar en</div>
+                                <div class="text-lg leading-none">App Store</div>
+                            </div>
+                        </button>
+                        <button class="bg-transparent border border-brand-surface2 text-white px-8 py-4 rounded-xl font-bold hover:border-brand-primary hover:text-brand-primary transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1">
+                            <i data-lucide="play" class="w-6 h-6 fill-current"></i>
+                            <div class="text-left">
+                                <div class="text-[10px] uppercase font-bold text-brand-muted leading-none">Disponible en</div>
+                                <div class="text-lg leading-none">Google Play</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-brand-dark border-t border-brand-surface2 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-lg flex items-center justify-center">
+                        <i data-lucide="crosshair" class="text-brand-primary w-5 h-5"></i>
+                    </div>
+                    <span class="font-bold text-xl text-white">SpotHunt</span>
+                </div>
+                
+                <div class="flex gap-8 text-sm text-brand-muted">
+                    <a href="#" class="hover:text-brand-primary transition-colors">Privacidad</a>
+                    <a href="#" class="hover:text-brand-primary transition-colors">Términos</a>
+                    <a href="#" class="hover:text-brand-primary transition-colors">Soporte</a>
+                    <a href="#" class="hover:text-brand-primary transition-colors">Twitter</a>
+                </div>
+
+                <p class="text-brand-muted text-sm">© 2024 SpotHunt Inc. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Init Scripts -->
+    <script>
+        // Icons
+        lucide.createIcons();
+
+        // Mobile Menu Logic
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+            // Change Icon
+            const icon = menu.classList.contains('hidden') ? 'menu' : 'x';
+            btn.innerHTML = `<i data-lucide="${icon}" class="w-6 h-6"></i>`;
+            lucide.createIcons();
+        });
+
+        // Navbar Scroll Effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-lg');
+                navbar.classList.replace('bg-transparent', 'bg-brand-surface/90');
+            } else {
+                navbar.classList.remove('shadow-lg');
+            }
+        });
+
+        // Simple Fade In Animation on Scroll (Intersection Observer)
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section > div').forEach(el => {
+            el.classList.add('transition-all', 'duration-1000', 'opacity-0', 'translate-y-10');
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
